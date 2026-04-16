@@ -1,5 +1,5 @@
-// GPS Collector Application Logic
-// Handles geolocation, data display, saving, and local storage
+// GPS Collector Application Logic with Live Map Integration
+// Handles geolocation, data display, saving, local storage, and interactive map
 
 (function() {
     // DOM Elements
@@ -19,18 +19,82 @@
     const saveMessageSpan = document.getElementById('saveMessage');
     const historyListDiv = document.getElementById('historyList');
     const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    const mapContainer = document.getElementById('mapContainer');
+    const mapDiv = document.getElementById('map');
 
     // State variables
-    let currentPositionData = null;      // Stores latest GPS object
-    let watchId = null;                   // For continuous watching (optional but we'll use single shot)
+    let currentPositionData = null;
+    let watchId = null;
     let isLocating = false;
+    let mapInstance = null;      // Leaflet map instance
+    let currentMarker = null;    // Current position marker
+    let currentCircle = null;    // Accuracy circle
 
     // Local storage key for history
     const STORAGE_KEY = 'gps_location_history';
-
-    // Load saved history from localStorage
     let savedLocations = [];
 
+    // Initialize map (but don't show until we have coordinates)
+    function initMap(lat, lng, accuracy) {
+        if (mapInstance) {
+            // Update existing map view
+            mapInstance.setView([lat, lng], 16);
+            if (currentMarker) {
+                currentMarker.setLatLng([lat, lng]);
+            } else {
+                currentMarker = L.marker([lat, lng]).addTo(mapInstance)
+                    .bindPopup('<b>📍 Your Location</b><br>Lat: ' + lat.toFixed(6) + '<br>Lng: ' + lng.toFixed(6))
+                    .openPopup();
+            }
+            if (currentCircle) {
+                currentCircle.setLatLng([lat, lng]);
+                if (accuracy && accuracy > 0) {
+                    currentCircle.setRadius(accuracy);
+                }
+            } else if (accuracy && accuracy > 0) {
+                currentCircle = L.circle([lat, lng], {
+                    radius: accuracy,
+                    color: '#1e7e8c',
+                    fillColor: '#1e7e8c',
+                    fillOpacity: 0.15,
+                    weight: 2
+                }).addTo(mapInstance);
+            }
+        } else {
+            // Create new map
+            mapInstance = L.map(mapDiv).setView([lat, lng], 16);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CartoDB',
+                subdomains: 'abcd',
+                maxZoom: 19,
+                minZoom: 3
+            }).addTo(mapInstance);
+            
+            currentMarker = L.marker([lat, lng]).addTo(mapInstance)
+                .bindPopup('<b>📍 Your Location</b><br>Lat: ' + lat.toFixed(6) + '<br>Lng: ' + lng.toFixed(6))
+                .openPopup();
+            
+            if (accuracy && accuracy > 0) {
+                currentCircle = L.circle([lat, lng], {
+                    radius: accuracy,
+                    color: '#1e7e8c',
+                    fillColor: '#1e7e8c',
+                    fillOpacity: 0.15,
+                    weight: 2
+                }).addTo(mapInstance);
+            }
+        }
+        
+        // Show map container
+        if (mapContainer) mapContainer.style.display = 'block';
+        
+        // Force map to refresh after a short delay (fixes rendering issues)
+        setTimeout(() => {
+            if (mapInstance) mapInstance.invalidateSize();
+        }, 100);
+    }
+
+    // Load history from localStorage
     function loadHistoryFromStorage() {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
@@ -47,11 +111,11 @@
     }
 
     function saveHistoryToStorage() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedLocations.slice(0, 10))); // keep last 10
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedLocations.slice(0, 10)));
         renderHistory();
     }
 
-    // Render the history list in the UI
+    // Render history list
     function renderHistory() {
         if (!historyListDiv) return;
         
@@ -69,8 +133,8 @@
                         <strong>📍 ${loc.lat.toFixed(5)}°, ${loc.lng.toFixed(5)}°</strong>
                         <div class="text-muted small">${formattedTime} | acc: ${loc.accuracy}m</div>
                     </div>
-                    <button class="btn btn-sm btn-outline-secondary view-coord-btn" data-lat="${loc.lat}" data-lng="${loc.lng}" data-idx="${idx}" style="font-size:0.7rem;">
-                        <i class="fas fa-eye"></i>
+                    <button class="btn btn-sm btn-outline-secondary view-coord-btn" data-lat="${loc.lat}" data-lng="${loc.lng}" data-acc="${loc.accuracy}" data-idx="${idx}" style="font-size:0.7rem;">
+                        <i class="fas fa-map-marker-alt"></i> Map
                     </button>
                 </div>
             `;
@@ -84,23 +148,29 @@
                 e.stopPropagation();
                 const lat = parseFloat(btn.getAttribute('data-lat'));
                 const lng = parseFloat(btn.getAttribute('data-lng'));
+                const acc = parseFloat(btn.getAttribute('data-acc'));
                 if (!isNaN(lat) && !isNaN(lng)) {
-                    // Update current display with selected history item (preview)
-                    if (currentPositionData) {
-                        // optional, but we can show a temporary preview
-                        alert(`📍 Viewing saved location:\nLat: ${lat.toFixed(6)}\nLng: ${lng.toFixed(6)}\n(not overwriting current GPS)`);
+                    // Show saved location on map without overwriting current GPS data
+                    if (mapInstance) {
+                        mapInstance.setView([lat, lng], 15);
+                        // Add a temporary marker for the saved location
+                        const tempMarker = L.marker([lat, lng]).addTo(mapInstance)
+                            .bindPopup('<b>📌 Saved Location</b><br>Lat: ' + lat.toFixed(6) + '<br>Lng: ' + lng.toFixed(6))
+                            .openPopup();
+                        // Remove temp marker after 3 seconds
+                        setTimeout(() => {
+                            if (mapInstance && tempMarker) mapInstance.removeLayer(tempMarker);
+                        }, 3000);
                     } else {
-                        latValue.textContent = lat.toFixed(6);
-                        lngValue.textContent = lng.toFixed(6);
-                        statusBadge.innerHTML = `📜 History preview`;
-                        statusBadge.className = 'badge px-3 py-2 rounded-pill bg-info text-dark';
+                        // If map not initialized yet, show alert
+                        alert(`📍 Saved location:\nLat: ${lat.toFixed(6)}\nLng: ${lng.toFixed(6)}\nGet GPS location first to activate map.`);
                     }
                 }
             });
         });
     }
 
-    // Helper: update UI with position object
+    // Update UI with position and map
     function updateUIWithPosition(position) {
         const coords = position.coords;
         const timestamp = new Date(position.timestamp);
@@ -131,9 +201,9 @@
             accuracyTag.innerHTML = '—';
         }
         
-        // Extra metadata (source method, provider)
+        // Extra metadata
         sourceMethodSpan.textContent = position.coords.altitudeAccuracy !== undefined ? 'hybrid' : 'gps/network';
-        providerInfoSpan.textContent = position.coords.accuracy < 50 ? 'GPS fix' : (position.coords.accuracy < 200 ? 'Network assisted' : 'Approximate');
+        providerInfoSpan.textContent = coords.accuracy < 50 ? 'GPS fix' : (coords.accuracy < 200 ? 'Network assisted' : 'Approximate');
         
         // Store current data for saving
         currentPositionData = {
@@ -151,6 +221,11 @@
         saveDataBtn.disabled = false;
         statusBadge.innerHTML = `✅ GPS Ready`;
         statusBadge.className = 'badge px-3 py-2 rounded-pill bg-success text-white';
+        
+        // Update or create map with current coordinates
+        if (coords.latitude && coords.longitude) {
+            initMap(coords.latitude, coords.longitude, coords.accuracy);
+        }
     }
     
     function showError(message, isGeoError = false) {
@@ -170,29 +245,14 @@
             sourceMethodSpan.textContent = '—';
             providerInfoSpan.textContent = '—';
         }
-        
-        // Show temporary feedback in the extra area
-        const extraMetaDiv = document.getElementById('extraMeta');
-        if (extraMetaDiv) {
-            // not overwriting, but we can add a small warning
-        }
     }
     
-    // Success callback from geolocation
     function handleGeoSuccess(position) {
         isLocating = false;
         getLocationBtn.disabled = false;
         getLocationBtn.innerHTML = '<i class="fas fa-location-dot me-2"></i>Get GPS Location';
         getLocationBtn.classList.remove('btn-loading');
-        
         updateUIWithPosition(position);
-        
-        // auto-show small feedback after 2 sec if needed (optional)
-        setTimeout(() => {
-            if (saveFeedback.classList.contains('d-none') === false) {
-                // keep it but we'll manage independently
-            }
-        }, 300);
     }
     
     function handleGeoError(error) {
@@ -218,7 +278,6 @@
         showError(errorMsg, true);
     }
     
-    // Main function to request GPS location (high accuracy)
     function requestGPSLocation() {
         if (isLocating) return;
         
@@ -232,7 +291,6 @@
         getLocationBtn.innerHTML = '<i class="fas fa-spinner fa-pulse me-2"></i>Acquiring GPS...';
         getLocationBtn.classList.add('btn-loading');
         
-        // Reset status temporary
         statusBadge.innerHTML = `🛰️ Getting location...`;
         statusBadge.className = 'badge px-3 py-2 rounded-pill bg-warning text-dark';
         
@@ -245,7 +303,6 @@
         navigator.geolocation.getCurrentPosition(handleGeoSuccess, handleGeoError, options);
     }
     
-    // Save current GPS data to history & show feedback
     function saveCurrentData() {
         if (!currentPositionData) {
             saveMessageSpan.textContent = 'No GPS data available. Get location first.';
@@ -256,7 +313,6 @@
             return;
         }
         
-        // Create a clean record
         const record = {
             id: Date.now(),
             lat: currentPositionData.lat,
@@ -273,30 +329,24 @@
         if (savedLocations.length > 10) savedLocations.pop();
         saveHistoryToStorage();
         
-        // Show success feedback
         saveMessageSpan.innerHTML = `✅ Saved: ${record.lat.toFixed(4)}°, ${record.lng.toFixed(4)}°`;
         saveFeedback.classList.remove('d-none');
         setTimeout(() => {
             saveFeedback.classList.add('d-none');
         }, 2500);
         
-        // subtle visual enhancement: button pulse
         saveDataBtn.style.transform = 'scale(0.98)';
         setTimeout(() => { saveDataBtn.style.transform = ''; }, 150);
     }
     
-    // Clear entire history
     function clearHistory() {
         if (confirm('Delete all saved locations?')) {
             savedLocations = [];
             saveHistoryToStorage();
             renderHistory();
-            const tempDiv = document.getElementById('saveFeedback');
-            if (tempDiv) {
-                saveMessageSpan.innerHTML = '🗑️ History cleared.';
-                saveFeedback.classList.remove('d-none');
-                setTimeout(() => saveFeedback.classList.add('d-none'), 1800);
-            }
+            saveMessageSpan.innerHTML = '🗑️ History cleared.';
+            saveFeedback.classList.remove('d-none');
+            setTimeout(() => saveFeedback.classList.add('d-none'), 1800);
         }
     }
     
@@ -305,15 +355,13 @@
     saveDataBtn.addEventListener('click', saveCurrentData);
     if (clearHistoryBtn) clearHistoryBtn.addEventListener('click', clearHistory);
     
-    // Initialize: load history from storage and set default UI state
+    // Initialize: load history and set default UI
     loadHistoryFromStorage();
     
-    // Optional: check if geolocation is available, set initial status
     if (!navigator.geolocation) {
         showError('Browser does not support Geolocation', true);
         getLocationBtn.disabled = true;
     }
     
-    // On page load, maybe a hint
-    console.log('GPS Collector ready — request location using button');
+    console.log('GPS Collector with Map ready — request location using button');
 })();
