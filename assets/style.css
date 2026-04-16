@@ -19,7 +19,29 @@
 body.bg-gradient-body {
   background: linear-gradient(135deg, #e9f0fc 0%, #d4e0f0 100%);
   min-height: 100vh;
-  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  font-family: 'Cascadia Mono', monospace;
+}
+
+/* Header Logo Styles */
+.header-logo {
+  height: 150px;
+  width: auto;
+  object-fit: contain;
+  /* filter: brightness(0) invert(1); /* Makes white logo on dark header */
+  transition: transform 0.2s ease;
+  border-radius: 0.5rem;
+}
+
+.header-logo:hover {
+  transform: scale(1.05);
+}
+
+/* If you have a colored logo, remove the filter line above */
+/* For responsive design */
+@media (max-width: 576px) {
+  .header-logo {
+    height: 36px;
+  }
 }
 
 /* Main GPS Card */
@@ -66,6 +88,38 @@ body.bg-gradient-body {
 .status-card:focus-within {
   border-color: #1e7e8c;
   box-shadow: 0 0 0 2px rgba(30, 126, 140, 0.1);
+}
+
+/* Map Container Styles */
+#mapContainer {
+  display: none;
+  margin-bottom: 1rem;
+}
+
+#map {
+  height: 260px;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid #e2edf7;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  z-index: 1;
+}
+
+/* Leaflet popup custom styling */
+.leaflet-popup-content {
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+}
+
+/* Map attribution text */
+.leaflet-control-attribution {
+  font-size: 9px;
+  background: rgba(255, 255, 255, 0.8);
 }
 
 /* Coordinate Cards */
