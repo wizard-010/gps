@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>GPS Locator | Precision Position Collector</title>
+  <!-- Bootstrap 5 CSS (for breakpoints & utilities) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- External custom CSS -->
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="bg-gradient-body">
+  <div class="container py-4 py-md-5">
+    <div class="row justify-content-center">
+      <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
+        <!-- Main GPS Card -->
+        <div class="gps-card shadow-lg rounded-4 overflow-hidden">
+          <!-- Header Section -->
+          <div class="card-header-custom px-4 px-sm-5 pt-4 pb-3 text-white">
+            <div class="d-flex align-items-center justify-content-center gap-2 flex-wrap">
+              <i class="fas fa-map-marker-alt fs-1"></i>
+              <h1 class="display-6 fw-semibold mb-0">GPS Collector</h1>
+            </div>
+            <p class="text-center text-white-80 mt-2 mb-0 small">Precision location & coordinates · One‑tap permission</p>
+          </div>
+
+          <!-- Content Body -->
+          <div class="card-body-custom p-4 p-sm-5 bg-white">
+            <!-- Info Panel -->
+            <div class="alert alert-info d-flex align-items-start gap-3 border-0 bg-soft-info rounded-3 mb-4" role="alert">
+              <i class="fas fa-satellite-dish fs-5 mt-1"></i>
+              <div class="small">
+                <strong>How it works:</strong> Grant location access, and your GPS coordinates (latitude, longitude, accuracy, altitude, speed) will appear below. You can review and save the data instantly.
+              </div>
+            </div>
+
+            <!-- Dynamic Status Area -->
+            <div class="status-card border rounded-3 p-3 p-md-4 mb-4 shadow-sm" id="statusArea">
+              <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 border-bottom pb-2 mb-3">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge px-3 py-2 rounded-pill" id="statusBadge">⚪ Waiting</span>
+                  <span class="badge bg-secondary bg-opacity-25 text-dark px-3 py-2 rounded-pill" id="accuracyTag">—</span>
+                </div>
+                <small class="text-muted" id="liveBadge"><i class="fas fa-sync-alt fa-fw"></i> realtime</small>
+              </div>
+
+              <!-- Coordinates Grid: Bootstrap row/col system with breakpoints -->
+              <div class="row g-3" id="coordGrid">
+                <div class="col-12 col-sm-6">
+                  <div class="coord-card p-2 rounded-2">
+                    <div class="text-secondary small text-uppercase fw-semibold"><i class="fas fa-arrow-up"></i> Latitude</div>
+                    <div class="fw-bold fs-5 font-monospace" id="latValue">—</div>
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6">
+                  <div class="coord-card p-2 rounded-2">
+                    <div class="text-secondary small text-uppercase fw-semibold"><i class="fas fa-arrow-right"></i> Longitude</div>
+                    <div class="fw-bold fs-5 font-monospace" id="lngValue">—</div>
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6">
+                  <div class="coord-card p-2 rounded-2">
+                    <div class="text-secondary small text-uppercase fw-semibold"><i class="fas fa-mountain"></i> Altitude (m)</div>
+                    <div class="fw-semibold font-monospace" id="altValue">—</div>
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6">
+                  <div class="coord-card p-2 rounded-2">
+                    <div class="text-secondary small text-uppercase fw-semibold"><i class="fas fa-bullseye"></i> Accuracy (m)</div>
+                    <div class="fw-semibold font-monospace" id="accValue">—</div>
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6">
+                  <div class="coord-card p-2 rounded-2">
+                    <div class="text-secondary small text-uppercase fw-semibold"><i class="fas fa-tachometer-alt"></i> Speed (km/h)</div>
+                    <div class="fw-semibold font-monospace" id="speedValue">—</div>
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6">
+                  <div class="coord-card p-2 rounded-2">
+                    <div class="text-secondary small text-uppercase fw-semibold"><i class="far fa-clock"></i> Timestamp</div>
+                    <div class="fw-semibold small font-monospace" id="timeValue">—</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Extra metadata -->
+              <div class="mt-3 pt-2 border-top small text-muted d-flex flex-wrap justify-content-between" id="extraMeta">
+                <span><i class="fas fa-microchip"></i> Source: <span id="sourceMethod">—</span></span>
+                <span><i class="fas fa-globe"></i> Provider: <span id="providerInfo">—</span></span>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex flex-column flex-sm-row gap-3 mt-3">
+              <button id="getLocationBtn" class="btn btn-primary flex-fill py-2 rounded-pill shadow-sm">
+                <i class="fas fa-location-dot me-2"></i>Get GPS Location
+              </button>
+              <button id="saveDataBtn" class="btn btn-outline-success flex-fill py-2 rounded-pill" disabled>
+                <i class="fas fa-save me-2"></i>Save GPS Data
+              </button>
+            </div>
+
+            <!-- Save confirmation -->
+            <div id="saveFeedback" class="alert alert-success mt-4 mb-0 py-2 px-3 small d-none" role="alert">
+              <i class="fas fa-check-circle me-1"></i> <span id="saveMessage">Location saved successfully!</span>
+            </div>
+
+            <!-- Saved entries summary -->
+            <div class="mt-4 pt-2" id="historySection">
+              <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-2 text-secondary"><i class="fas fa-history"></i> Recent saved locations</h6>
+                <button id="clearHistoryBtn" class="btn btn-link btn-sm text-muted p-0 text-decoration-none">Clear</button>
+              </div>
+              <div id="historyList" class="small bg-light p-2 rounded-2" style="max-height: 140px; overflow-y: auto;">
+                <div class="text-muted fst-italic text-center py-1">No saved data yet</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- External JavaScript -->
+  <script src="assets/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

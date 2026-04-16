@@ -1,0 +1,240 @@
+/* GPS Collector - Main Stylesheet */
+/* Bootstrap breakpoints are used in HTML, this adds custom styling */
+
+:root {
+  --primary-dark: #0b2b44;
+  --primary-gradient-start: #1a6d7c;
+  --primary-gradient-end: #0e4b5e;
+  --soft-info-bg: #e6f4f9;
+  --card-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.2);
+  --border-radius-card: 1.25rem;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body.bg-gradient-body {
+  background: linear-gradient(135deg, #e9f0fc 0%, #d4e0f0 100%);
+  min-height: 100vh;
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+/* Main GPS Card */
+.gps-card {
+  background: transparent;
+  border-radius: var(--border-radius-card);
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+
+.gps-card:hover {
+  transform: translateY(-3px);
+}
+
+/* Custom Card Header */
+.card-header-custom {
+  background: linear-gradient(135deg, #0f3b5c 0%, #0a2a44 100%);
+  border-bottom: none;
+}
+
+.text-white-80 {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Card Body */
+.card-body-custom {
+  background: white;
+  border-radius: 0 0 var(--border-radius-card) var(--border-radius-card);
+}
+
+/* Soft Info Alert */
+.bg-soft-info {
+  background-color: var(--soft-info-bg) !important;
+  border-left: 4px solid #1e7e8c !important;
+}
+
+/* Status Card */
+.status-card {
+  background: #fefefe;
+  border: 1px solid #e2edf7;
+  transition: all 0.2s;
+}
+
+.status-card:focus-within {
+  border-color: #1e7e8c;
+  box-shadow: 0 0 0 2px rgba(30, 126, 140, 0.1);
+}
+
+/* Coordinate Cards */
+.coord-card {
+  background: #f8fafd;
+  transition: all 0.15s ease;
+  border-left: 3px solid #1e7e8c;
+}
+
+.coord-card:hover {
+  background: #f0f6fe;
+  transform: translateX(3px);
+}
+
+/* Badge styling */
+#statusBadge {
+  background: #eef2fa;
+  color: #0f3b5c;
+  font-weight: 600;
+}
+
+#statusBadge.active {
+  background: #d4edda;
+  color: #155724;
+}
+
+#statusBadge.error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* Button custom hover */
+.btn-primary {
+  background: linear-gradient(135deg, #1e7e8c 0%, #0f5c68 100%);
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0f6a78 0%, #0a4e58 100%);
+  transform: scale(1.02);
+  box-shadow: 0 6px 14px rgba(30, 126, 140, 0.3);
+}
+
+.btn-outline-success {
+  border: 1px solid #2c7a5e;
+  color: #2c7a5e;
+}
+
+.btn-outline-success:hover {
+  background: #2c7a5e;
+  border-color: #2c7a5e;
+}
+
+.btn-outline-success:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Font mono for coordinates */
+.font-monospace {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  letter-spacing: 0.3px;
+}
+
+/* History section scrollbar */
+#historyList::-webkit-scrollbar {
+  width: 5px;
+}
+
+#historyList::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+#historyList::-webkit-scrollbar-thumb {
+  background: #1e7e8c;
+  border-radius: 10px;
+}
+
+/* Responsive adjustments using Bootstrap breakpoints via classes */
+/* Additional fine-tuning for extra small devices */
+@media (max-width: 576px) {
+  .card-body-custom {
+    padding: 1.25rem !important;
+  }
+  
+  .display-6 {
+    font-size: 1.6rem !important;
+  }
+  
+  .coord-card {
+    padding: 0.75rem !important;
+  }
+  
+  .fs-5 {
+    font-size: 1rem !important;
+  }
+}
+
+/* Tablet and up */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .gps-card {
+    max-width: 95%;
+    margin: 0 auto;
+  }
+}
+
+/* Loading animation for button */
+.btn-loading {
+  pointer-events: none;
+  opacity: 0.7;
+  position: relative;
+}
+
+.btn-loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  right: 20px;
+  margin-top: -8px;
+  border: 2px solid white;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spinner 0.6s linear infinite;
+}
+
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Toast / feedback animation */
+.alert-success {
+  animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* History list items */
+.history-item {
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  border-left: 3px solid #1e7e8c;
+  transition: all 0.1s;
+}
+
+.history-item:hover {
+  background: #f0f7fb;
+  transform: translateX(2px);
+}
+
+/* Extra meta icons spacing */
+#extraMeta i {
+  width: 18px;
+  color: #5f7f9c;
+}
